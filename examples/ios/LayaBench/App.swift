@@ -16,24 +16,65 @@ final class BenchModel: ObservableObject {
     @Published var running = false
     @Published var useCoreML = true
 
+    // Results are saved after every run, so a run that gets the app killed (iOS ends apps that
+    // use too much memory) still leaves the earlier results and names the run that died.
+    // Files > On My iPhone > LayaBench, or Finder > iPhone > Files, shows laya_report.json.
+    nonisolated private static let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    nonisolated private static let resultsURL = docs.appendingPathComponent("laya_results.json")
+    nonisolated private static let reportURL = docs.appendingPathComponent("laya_report.json")
+    nonisolated private static let runningURL = docs.appendingPathComponent("laya_running.txt")
+
+    init() {
+        if let data = try? Data(contentsOf: Self.resultsURL),
+           let saved = try? JSONDecoder().decode([RunResult].self, from: data) {
+            results = saved
+        }
+        if let died = try? String(contentsOf: Self.runningURL, encoding: .utf8) {
+            let parts = died.split(separator: "/").map(String.init)
+            var r = RunResult(variant: parts.first ?? "?", provider: parts.last ?? "?", sizeMB: 0)
+            r.error = "The app was closed during this run, most likely because iOS ran out of memory for it."
+            results.append(r)
+            try? FileManager.default.removeItem(at: Self.runningURL)
+            save()
+        }
+        if !results.isEmpty { status = "Results from the last session. Tap Run to start again." }
+    }
+
+    private func save() {
+        if let data = try? JSONEncoder().encode(results) { try? data.write(to: Self.resultsURL) }
+        try? report.data(using: .utf8)?.write(to: Self.reportURL)
+    }
+
+    private func record(_ r: RunResult) {
+        results.append(r)
+        try? FileManager.default.removeItem(at: Self.runningURL)
+        save()
+        if let data = try? JSONEncoder().encode(r) { print("LAYA_RESULT " + String(decoding: data, as: UTF8.self)) }
+    }
+
     func start() {
         running = true
         results = []
+        save()
         let coreML = useCoreML
         Task.detached(priority: .userInitiated) {
             do {
                 let inputs = try Bench.loadInputs()
                 let env = try ORTEnv(loggingLevel: .warning)
-                let providers = coreML ? [false, true] : [false]
-                for variant in inputs.variants {
-                    for ml in providers {
-                        await MainActor.run { self.status = "Running \(variant) on \(ml ? "CoreML" : "CPU")..." }
-                        // Each run builds and drops its own sessions, so variants never share memory.
-                        let r = autoreleasepool { Bench.run(variant: variant, coreML: ml, inputs: inputs, env: env) }
-                        await MainActor.run { self.results.append(r) }
-                    }
+                // Smallest variant first, and every CPU run before any CoreML run: CoreML
+                // compiles the model and needs the most memory, so it is the likeliest to be killed.
+                let variants = inputs.variants.sorted { Bench.sizeMB(Bench.modelsURL!.appendingPathComponent($0)) <
+                                                        Bench.sizeMB(Bench.modelsURL!.appendingPathComponent($1)) }
+                let runs = variants.map { ($0, false) } + (coreML ? variants.map { ($0, true) } : [])
+                for (variant, ml) in runs {
+                    let name = "\(variant)/\(ml ? "CoreML" : "CPU")"
+                    try? name.write(to: Self.runningURL, atomically: true, encoding: .utf8)
+                    await MainActor.run { self.status = "Running \(variant) on \(ml ? "CoreML" : "CPU")..." }
+                    // Each run builds and drops its own sessions, so variants never share memory.
+                    let r = autoreleasepool { Bench.run(variant: variant, coreML: ml, inputs: inputs, env: env) }
+                    await MainActor.run { self.record(r) }
                 }
-                await MainActor.run { self.status = "Done on \(deviceModel()). Copy the report and share it." }
+                await MainActor.run { self.status = "Done on \(deviceModel()). Share the report, or take it from Files." }
             } catch {
                 await MainActor.run { self.status = error.localizedDescription }
             }

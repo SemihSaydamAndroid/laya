@@ -53,6 +53,10 @@ Then, in Xcode:
    - The first time, turn on **Settings > Privacy & Security > Developer Mode** on the phone.
    - Then trust the developer under **Settings > General > VPN & Device Management**.
 4. Tap **Run benchmark**, keep the phone unlocked, and use **Share report** to send the JSON.
+   Each result is saved as soon as its run ends, to `laya_report.json` in the app's Documents
+   (Files > On My iPhone > LayaBench, or Finder > your iPhone > Files). If iOS closes the app
+   mid-run, usually for memory, reopen it: the earlier results are kept and the run that died is named.
+   Every result is also printed to the Xcode console as a `LAYA_RESULT {...}` line.
 
 The report lists the device model, the iOS version, and, for each variant on CPU and on
 CoreML:
