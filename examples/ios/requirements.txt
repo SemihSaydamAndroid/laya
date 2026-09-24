@@ -1,0 +1,7 @@
+torch
+transformers
+onnx
+onnxscript
+onnxruntime>=1.22
+onnxconverter-common
+huggingface_hub
