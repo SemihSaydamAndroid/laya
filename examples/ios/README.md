@@ -33,6 +33,7 @@ You need a Mac with Xcode 15 or newer, Python 3.10 or newer, and an iPhone on iO
 
 ```bash
 git clone https://github.com/NandhaKishorM/laya && cd laya
+python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -e . -r examples/ios/requirements.txt
 python examples/ios/prepare_models.py            # fp16 + w8e8; add --variants fp32,fp16,w8e8 for fp32
 open examples/ios/LayaBench.swiftpm
