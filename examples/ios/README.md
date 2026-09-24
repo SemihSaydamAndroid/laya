@@ -36,17 +36,18 @@ git clone https://github.com/NandhaKishorM/laya && cd laya
 python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -e . -r examples/ios/requirements.txt
 python examples/ios/prepare_models.py            # fp16 + w8e8; add --variants fp32,fp16,w8e8 for fp32
-open examples/ios/LayaBench.swiftpm
+open examples/ios/LayaBench.xcodeproj
 ```
 
 `prepare_models.py` downloads the checkpoint (about 650 MB), exports it with
 `laya-ts/scripts/export_onnx.py`, and writes the variants and `bench_inputs.json` into
-`LayaBench.swiftpm/Models/`, which git ignores. It takes about five minutes.
+`examples/ios/Models/`, which git ignores. It takes about five minutes.
 
 Then, in Xcode:
 
 1. Wait for the `onnxruntime` package to resolve.
-2. Select the LayaBench target. Under **Signing & Capabilities**, choose your team. A free
+2. Select the LayaBench project, then the LayaBench target. Under **Signing & Capabilities**, choose your team.
+   If Xcode reports that the bundle identifier is taken, change it to something unique. A free
    Apple ID ("Personal Team") works.
 3. Connect the iPhone, select it as the run destination, and press **Run**.
    - The first time, turn on **Settings > Privacy & Security > Developer Mode** on the phone.
@@ -69,3 +70,5 @@ CoreML:
   the CPU. The report shows whether that helps or hurts.
 - fp32 needs about 1.3 GB of memory for its weights alone and may be killed by iOS on phones
   with 4 GB of RAM.
+- `LayaBench.xcodeproj` is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+  Edit `project.yml` and run `xcodegen` in `examples/ios/` to change it.

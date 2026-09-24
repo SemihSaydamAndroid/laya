@@ -6,7 +6,7 @@ Run on the Mac that builds the app (the files are too large for git):
     python examples/ios/prepare_models.py                     # fp16 + w8e8
     python examples/ios/prepare_models.py --variants fp32,fp16,w8e8
 
-Writes ``examples/ios/LayaBench.swiftpm/Models/<variant>/{encoder,head}.onnx``
+Writes ``examples/ios/Models/<variant>/{encoder,head}.onnx``
 plus ``Models/bench_inputs.json``: pre-tokenized cases (so the app needs no
 tokenizer) with the probabilities each variant gives on this machine, which the
 app compares against what the phone computes.
@@ -31,7 +31,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-DEFAULT_OUT = os.path.join(HERE, "LayaBench.swiftpm", "Models")
+DEFAULT_OUT = os.path.join(HERE, "Models")
 DEFAULT_WORK = os.path.join(HERE, ".work")
 
 LONG_TR = (
