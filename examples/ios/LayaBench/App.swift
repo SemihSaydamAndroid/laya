@@ -14,7 +14,9 @@ final class BenchModel: ObservableObject {
     @Published var results: [RunResult] = []
     @Published var status = "Tap Run. Keep the phone unlocked and on the charger."
     @Published var running = false
-    @Published var useCoreML = true
+    // Off by default: on an iPhone SE (2nd gen) ORT's CoreML provider took 66 of 1,323 encoder
+    // nodes in 22 partitions and the app crashed inside the first CoreML run.
+    @Published var useCoreML = false
 
     // Results are saved after every run, so a run that gets the app killed (iOS ends apps that
     // use too much memory) still leaves the earlier results and names the run that died.
@@ -101,7 +103,7 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    Toggle("Also try CoreML (Neural Engine)", isOn: $model.useCoreML).disabled(model.running)
+                    Toggle("Also try CoreML (experimental, may crash)", isOn: $model.useCoreML).disabled(model.running)
                     Button(model.running ? "Running..." : "Run benchmark") { model.start() }.disabled(model.running)
                     Text(model.status).font(.footnote).foregroundStyle(.secondary)
                 }

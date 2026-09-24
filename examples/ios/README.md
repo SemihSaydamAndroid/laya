@@ -70,8 +70,8 @@ CoreML:
 
 - The head's `marker_mask` input is `uint8` in these files (`marker_mask_u8`), because the
   ONNX Runtime Objective-C API has no bool tensor type.
-- The CoreML execution provider does not run `MatMulNBits`, so w8e8 on CoreML runs partly on
-  the CPU. The report shows whether that helps or hurts.
+- CoreML is off by default. On an iPhone SE (2nd gen, iOS 26) ORT's CoreML provider took 66 of
+  the encoder's 1,323 nodes, in 22 partitions, and the app crashed in the first CoreML run.
 - fp32 needs about 1.3 GB of memory for its weights alone and may be killed by iOS on phones
   with 4 GB of RAM.
 - `LayaBench.xcodeproj` is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen).
