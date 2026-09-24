@@ -80,3 +80,8 @@ examples/ios/Models/*
 !examples/ios/Models/.gitkeep
 examples/ios/LayaBench.xcodeproj/xcuserdata/
 examples/ios/LayaBench.xcodeproj/project.xcworkspace/xcuserdata/
+
+# laya-swift build output
+laya-swift/.build/
+laya-swift/.swiftpm/
+laya-swift/Package.resolved
